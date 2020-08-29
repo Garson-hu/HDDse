@@ -1,6 +1,6 @@
-# 代码2020-7-22版本:实现了siamese LSTM,后续还需要针对论文进行改进
+# 代码2020-8-29版本:实现了siamese LSTM,后续还需要针对论文进行改进
 # 目标:复现ATC2020论文:HDDse
-# 环境设置为:CLoin 2020.1.3
+# 环境设置为:Pycharm 2020.2
 #          tensorflow 2.1.0-gpu
 #          keras 2.4.2  
 from __future__ import absolute_import
