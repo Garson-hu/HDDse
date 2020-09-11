@@ -1,8 +1,9 @@
 # 代码2020-8-29版本:实现了siamese LSTM,后续还需要针对论文进行改进
 # 目标:复现ATC2020论文:HDDse
 # 环境设置为:Pycharm 2020.2
-#          tensorflow 2.1.0-gpu
-#          keras 2.4.2  
+#          tensorflow 2.1.0
+#          keras 2.4.2
+# 代码还未进行整理
 from __future__ import absolute_import
 from __future__ import print_function
 import matplotlib.pyplot as plt
