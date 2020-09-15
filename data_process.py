@@ -1,44 +1,15 @@
 # 这里是生成训练集的所有相关代码
 import numpy as np
 import pandas as pd
-from keras.layers import Layer
-from keras import backend as K
 
-data_path = "数据集/test_1/"
-
-class EluDist(Layer):  # 封装成keras层的欧式距离计算
-
-    # 初始化EluDist层，此时不需要任何参数输入
-    def __init__(self, **kwargs):
-        self.result = None
-        super(EluDist, self).__init__(**kwargs)
-
-    # 建立EluDist层
-    def build(self, input_shape):
-        self.kernel = self.add_weight(name='kernel',
-                                      shape=(256, 1),
-                                      initializer='uniform',
-                                      trainable=True)
-        super(EluDist, self).build(input_shape)
-
-    # 计算欧式距离
-    def call(self, vects, **kwargs):
-        # 是否需要for循环
-        x, y = vects
-        self.result = K.abs(x - y)
-        self.result = K.dot(self.result, self.kernel)  # β乘上欧式距离
-        self.result = K.sigmoid(self.result)
-        return self.result
-
-    # 返回结果
-    def compute_output_shape(self, input_shape):
-        return K.int_shape(self.result)
+data_path = "数据/test_1/"
 
 
 # 对于csv文件中的输入的形状进行更改,并返回数据
 # (-1,9)->(-1,14,9)
 def data_reshape(filename):
-    data_set = np.loadtxt(data_path + filename, delimiter=",", skiprows=0)  # 去掉了max_rows
+    data_set = pd.read_csv(filename, usecols=[0, 1, 2, 3, 4, 5, 6, 7, 8], header=None)
+    data_set = np.array(data_set)
     data_set = data_set.astype('float32')
     data_set = data_set.reshape(-1, 14, 9)
     return data_set  # shape为(-1,14,9)
@@ -101,57 +72,66 @@ def get_number(arr, flag):
     return arr_new.size
 
 
+def generate_test_set():
+    health_set = pd.read_csv('health_test.csv', header=None)
+    health_set.to_csv('test.csv', mode='a', index=False, header=False)
+    failure_set = pd.read_csv('failure_test.csv', header=None)
+    failure_set.to_csv('test.csv', mode='a', index=False, header=False)
+
+
 # 下面的代码实现四步decision maker
 def decision_maker(model):
-    data_path = "数据集/带模型数据/WDC/process/"
-    test_data_model = pd.read_csv(data_path + "test_data_only_model.csv", header=None)
-    test_data_model = np.array(test_data_model).reshape(-1, 14)
 
-    # 读取模型号对应的数据
-    test_data_only = np.loadtxt(data_path + "test_data_only_data.csv", delimiter=",")
-    test_data_only = test_data_only.reshape(-1, 14, 9)
+    # 加载样本池中健康的已标样本及其模型
+    health_labeled = pd.read_csv('health.csv',  header=None)
+    print("健康样本数据池已加载")
 
-    # 读取health的训练数据带模型与不带模型
-    train_data_health = pd.read_csv(data_path + "health_disks_with_model.csv")
-    train_data_health = pd.DataFrame(train_data_health)
-    train_data_health_not = np.loadtxt(data_path + "health_disks.csv", delimiter=",")
+    # 加载样本池中故障的已标记样本及其模型
+    failure_labeled = pd.read_csv('failure.csv',  header=None)
+    print("故障样本数据池已加载")
+    # 加载测试集
+    test_set = pd.read_csv('test.csv', header=None)
+    print("测试样本已加载")
 
-    # 读取failure的训练数据带模型与不带模型
-    train_data_failure = pd.read_csv(data_path + "failure_disks_with_model.csv")
-    train_data_failure = pd.DataFrame(train_data_failure)
-    train_data_failure_not = np.loadtxt(data_path + "failure_disks.csv", delimiter=",")
+    # 取出测试集数据
+    test_set_data = test_set.iloc[:, 0:9].values
+    test_set_data = test_set_data.reshape(-1, 14, 9)
+
+    # 取出测试集合模型号
+    test_set_model = test_set.iloc[:,9].values
+    test_set_model = test_set_model.reshape(-1,14)
+
     label_predict = []
     cnt = 0
-    for i in range(len(test_data_model)):
-        if i % 100 == 0 and i != 0:
+    for i in range(len(test_set_model)):
+        if i % 100 == 0:
             print("滴滴滴:", i)
 
         # 获得该测试数据的模型号
-        model_name = test_data_model[i][0]
+        model_name = test_set_model[i][0]
 
         # 获得故障样本中的数据
-        same_model_data = train_data_failure.loc[train_data_failure['model'] == model_name]
+        same_model_data = failure_labeled.loc[failure_labeled[9] == model_name]
 
         # 故障样本是否存在相同模型的数据
-        if same_model_data.empty == False:
+        if not same_model_data.empty:
             same_model_data = same_model_data.iloc[:, 0:9].values
             same_model_data = same_model_data.reshape(-1, 14, 9)
 
             # 然后将训练数据与测试数据组成pair
-            pairs_1 = create_test_pairs(same_model_data, test_data_only[i])
+            pairs_1 = create_test_pairs(same_model_data, test_set_data[i])
 
             # 接着根据待检测的数据来进行预测
             prediction_temp = model.predict([pairs_1[:, 0], pairs_1[:, 1]])
 
             if (prediction_temp > 0.5).any():
                 label_predict += [1]
-                cnt += 1
                 continue
 
         # 获得健康样本中的数据
-        same_model_data = train_data_health.loc[train_data_health['model'] == model_name]
+        same_model_data = health_labeled.loc[health_labeled[9] == model_name]
 
-        if same_model_data.empty == False:
+        if not same_model_data.empty:
             same_model_data = same_model_data.iloc[:, 0:9].values
             same_model_data = same_model_data.reshape(-1, 14, 9)
 
@@ -160,7 +140,7 @@ def decision_maker(model):
             same_model_data = same_model_data[:int(len(same_model_data) / 10), :]
 
             # 然后将训练数据与测试数据组成pair
-            pairs_2 = create_test_pairs(same_model_data, test_data_only[i])
+            pairs_2 = create_test_pairs(same_model_data, test_set_data[i])
 
             # 接着根据待检测的数据来进行预测
             prediction_temp = model.predict([pairs_2[:, 0], pairs_2[:, 1]])
@@ -170,30 +150,30 @@ def decision_maker(model):
             # 根据预测的结果得到一个label
             if count_2 == len(prediction_temp):
                 label_predict += [0]
-                cnt += 1
                 continue
 
         # 获得同一厂商的故障数据
-        same_manu_data = train_data_failure_not.reshape(-1, 14, 9)
+        same_manu_data = failure_labeled.iloc[:, 0:9].values
+        same_manu_data = same_manu_data.reshape(-1, 14, 9)
 
         # 然后将训练数据与测试数据组成pair
-        pairs_3 = create_test_pairs(same_manu_data, test_data_only[i])
+        pairs_3 = create_test_pairs(same_manu_data, test_set_data[i])
 
         # 接着根据待检测的数据来进行预测
         prediction_temp = model.predict([pairs_3[:, 0], pairs_3[:, 1]])
         count_3 = get_number(prediction_temp, False)
         if count_3 > (len(prediction_temp) / 2):
             label_predict += [0]
-            cnt += 1
             continue
 
         # 获得同一厂商的健康数据
-        same_manu_data = train_data_health_not.reshape(-1, 14, 9)
-        np.random.shuffle(same_model_data)
-        same_model_data = same_model_data[:int(len(same_model_data) / 10), :]
+        same_manu_data = health_labeled.iloc[:, 0:9].values
+        same_manu_data = same_manu_data.reshape(-1, 14, 9)
+        np.random.shuffle(same_manu_data)
+        same_manu_data = same_manu_data[:int(len(same_manu_data) / 10), :]
 
         # 然后将训练数据与测试数据组成pair
-        pairs_4 = create_test_pairs(same_manu_data, test_data_only[i])
+        pairs_4 = create_test_pairs(same_manu_data, test_set_data[i])
 
         # 接着根据待检测的数据来进行预测
         prediction_temp = model.predict([pairs_4[:, 0], pairs_4[:, 1]])
@@ -201,9 +181,6 @@ def decision_maker(model):
 
         if count_4 == len(prediction_temp):
             label_predict += [1]
-            cnt += 1
         else:
             label_predict += [0]
-            cnt += 1
-    print(cnt)
     return np.array(label_predict)  # 返回预测结果得到的label
