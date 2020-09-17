@@ -8,7 +8,7 @@ from Eludist_loss import EluDist, contrastive_loss
 from sklearn.metrics import classification_report
 
 # 加载模型
-save_path = "数据/model_train_m1.h5"
+save_path = "Data/model_train_m1.h5"
 model = keras.models.load_model(save_path, custom_objects={"EluDist": EluDist, "contrastive_loss": contrastive_loss})  # , "contrastive_loss": contrastive_loss
 model.summary()
 

@@ -2,6 +2,7 @@ from keras.layers import Layer
 import keras.backend as K
 import parameter
 
+
 class EluDist(Layer):  # 封装成keras层的欧式距离计算
 
     # 初始化EluDist层，此时不需要任何参数输入

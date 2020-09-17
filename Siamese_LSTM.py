@@ -1,4 +1,4 @@
-# 代码2020-8-29版本:实现了siamese LSTM,后续还需要针对论文进行改进
+# 代码2020-9-17版本:实现了siamese LSTM,后续还需要针对论文进行改进
 # 目标:复现ATC2020论文:HDDse
 # 环境设置为:Pycharm 2020.2
 #          tensorflow 2.1.0
@@ -9,15 +9,13 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import data_process as dp
 import parameter
-import numpy as np
-from keras.callbacks import Callback
 from keras import backend as K
 from keras import regularizers
 from keras.models import Model
 from keras.layers import Input, Dense, LSTM, Bidirectional
 from keras.optimizers import Adam
 from Eludist_loss import EluDist, contrastive_loss
-from keras.callbacks import LearningRateScheduler
+from keras.callbacks import LearningRateScheduler, TensorBoard, Callback
 # from sklearn.metrics import classification_report
 # from sklearn.preprocessing import minmax_scale
 
@@ -27,13 +25,6 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 # 计算故障样本的召回率
 def recall_failure(y_true, y_pred):
-    """Recall metric.
-
-    Only computes a batch-wise average of recall.
-
-    Computes the recall, a metric for multi-label classification of
-    how many relevant items are selected.
-    """
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
     possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
     recall = true_positives / (possible_positives + K.epsilon())
@@ -73,8 +64,8 @@ def step_decay(epoch):
 
 
 # read data and change data shape
-health_data_set = dp.data_reshape("health_disks.csv")
-failure_data_set = dp.data_reshape("failure_disks.csv")
+health_data_set = dp.data_reshape("health.csv")
+failure_data_set = dp.data_reshape("failure.csv")
 
 # construct training data
 x_train, y_train = dp.create_pairs(health_data_set, failure_data_set)
@@ -99,14 +90,17 @@ model = Model([input_a, input_b], distance)
 adam = Adam()  # 定义优化器
 
 model.compile(loss=contrastive_loss, optimizer=adam)  # 激活model
+tbCallBack = TensorBoard(log_dir="./tensorboard/log2", histogram_freq=1,
+                         batch_size=parameter.BATCH_SIZE, update_freq="epoch")
 
 # 这里可以使用两个for循环替代grid search
 history = model.fit([x_train[:, 0], x_train[:, 1]], y_train,  # 前面两个是训练的数据,后面tr_y是标签
                     batch_size=parameter.BATCH_SIZE,
                     epochs=parameter.N_EPOCH,
-                    callbacks=[learn_rate],  # 用来调整学习率
+                    callbacks=[learn_rate, tbCallBack],  # 用来调整学习率,同时实现tensorboard可视化
                     verbose=1,
                     validation_split=0.3)
+
 
 # 绘制训练 & 验证的损失值
 plt.plot(history.history['loss'])
@@ -117,5 +111,5 @@ plt.xlabel('Epoch')
 plt.legend('Train', loc='upper left')
 plt.show()
 
-save_path = "数据/"
+save_path = "Data/"
 model.save(save_path + "model_train.h5")

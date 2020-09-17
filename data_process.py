@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-data_path = "数据/test_1/"
+data_path = "Data/"
 
 
 # 对于csv文件中的输入的形状进行更改,并返回数据
@@ -72,11 +72,11 @@ def get_number(arr, flag):
     return arr_new.size
 
 
-def generate_test_set():
-    health_set = pd.read_csv('health_test.csv', header=None)
-    health_set.to_csv('test.csv', mode='a', index=False, header=False)
-    failure_set = pd.read_csv('failure_test.csv', header=None)
-    failure_set.to_csv('test.csv', mode='a', index=False, header=False)
+# def generate_test_set():
+#     health_set = pd.read_csv('health_test.csv', header=None)
+#     health_set.to_csv('test.csv', mode='a', index=False, header=False)
+#     failure_set = pd.read_csv('failure_test.csv', header=None)
+#     failure_set.to_csv('test.csv', mode='a', index=False, header=False)
 
 
 # 下面的代码实现四步decision maker
