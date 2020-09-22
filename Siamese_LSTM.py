@@ -1,4 +1,4 @@
-# 代码2020-9-17版本:实现了siamese LSTM,后续还需要针对论文进行改进
+# 代码2020-9-22版本:实现了siamese LSTM,后续还需要针对论文进行改进
 # 目标:复现ATC2020论文:HDDse
 # 环境设置为:Pycharm 2020.2
 #          tensorflow 2.1.0
@@ -68,9 +68,10 @@ health_data_set = dp.data_reshape("health.csv")
 failure_data_set = dp.data_reshape("failure.csv")
 
 # construct training data
+# print('我到这啦！')
 x_train, y_train = dp.create_pairs(health_data_set, failure_data_set)
 x_train = x_train.astype('float32')  # x_train的shape是(-1,14,9),也就是有多个输入,每个输入为14*9
-# print(x_train)
+# print(x_train.shape)
 input_shape = x_train.shape[2:]  # 形状为14 * 9,只保留数据的输入格式
 
 base_network = create_base_network(input_shape)

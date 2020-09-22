@@ -2,13 +2,13 @@
 import numpy as np
 import pandas as pd
 
-data_path = "Data/"
+data_path = "./Data/"
 
 
 # 对于csv文件中的输入的形状进行更改,并返回数据
 # (-1,9)->(-1,14,9)
 def data_reshape(filename):
-    data_set = pd.read_csv(filename, usecols=[0, 1, 2, 3, 4, 5, 6, 7, 8], header=None)
+    data_set = pd.read_csv(data_path + filename, usecols=[0, 1, 2, 3, 4, 5, 6, 7, 8], nrows=140, header=None)
     data_set = np.array(data_set)
     data_set = data_set.astype('float32')
     data_set = data_set.reshape(-1, 14, 9)
@@ -17,7 +17,7 @@ def data_reshape(filename):
 
 # 生成训练数据pair对
 # 主要是生成三类pair数据,<health,health>,<health,failure>,<failure,failure>
-# 这些pair数据的标签分别为(Y = 1,Y = 0,Y = 1)
+# 这些pair数据的标签：相同为1，不同为0
 def create_pairs(health_data_set, failure_data_set):
     pairs = []
     labels = []
@@ -70,13 +70,6 @@ def get_number(arr, flag):
         mask = (arr > 0.5)
         arr_new = arr[mask]
     return arr_new.size
-
-
-# def generate_test_set():
-#     health_set = pd.read_csv('health_test.csv', header=None)
-#     health_set.to_csv('test.csv', mode='a', index=False, header=False)
-#     failure_set = pd.read_csv('failure_test.csv', header=None)
-#     failure_set.to_csv('test.csv', mode='a', index=False, header=False)
 
 
 # 下面的代码实现四步decision maker
