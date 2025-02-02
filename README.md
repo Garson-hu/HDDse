@@ -35,4 +35,6 @@ cd HDDse
 ## Running the model
 
 Use the predict.py script to load the trained model and make predictions:
+```
 python3 predict.py --model <path_to_model> --input <path_to_input_data>
+```
