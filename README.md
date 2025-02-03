@@ -1,6 +1,6 @@
 # HDDse: Implementation of the HDDse Model Using Siamese LSTM
 
-This repository implements the method described in the ATC2020 paper [HDDse](https://www.usenix.org/system/files/atc20-zhang-ji.pdf). The approach leverages a Siamese LSTM architecture along with a custom Euclidean distance layer to perform tasks such as [insert task description here, e.g., "anomaly detection" or "similarity measurement"].
+This repository implements the method described in the ATC2020 paper [HDDse: Enabling High-Dimensional Disk State Embedding for Generic Failure Detection System of Heterogeneous Disks in Large Data Centers](https://www.usenix.org/system/files/atc20-zhang-ji.pdf). The approach leverages a Siamese LSTM architecture along with a custom Euclidean distance layer to perform tasks such as [insert task description here, e.g., "anomaly detection" or "similarity measurement"].
 
 ## File Structure
 
